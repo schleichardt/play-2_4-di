@@ -9,6 +9,7 @@ scalaVersion := "2.11.5"
 libraryDependencies ++=
   cache ::
   javaWs ::
+  ("io.sphere.sdk.jvm" % "models" % "1.0.0-M12" withSources()) ::
   "org.easytesting" % "fest-assert" % "1.4" % "test" ::
   Nil
 
