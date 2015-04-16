@@ -12,12 +12,14 @@ import javax.inject.Singleton;
 @Singleton
 public class Application extends Controller {
 
+    private final WhateverService service;
+
     @Inject
     public Application(final WhateverService service) {
+        this.service = service;
     }
 
     public Result index() {
         return ok(index.render("Your new application is ready."));
     }
-
 }
