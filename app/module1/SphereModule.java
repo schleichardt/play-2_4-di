@@ -18,18 +18,18 @@ public class SphereModule extends Module {
     public Seq<Binding<?>> bindings(final Environment environment, final Configuration configuration) {
         //here is access possible to fetch the credentials with configuration
 
-        return seq(bind(SphereClient.class).to(new SphereClientProvider(configuration)));
+        return seq(bind(SphereClient.class).toProvider(SphereClientProvider.class));
     }
 
     private static final class SphereClientProvider implements Provider<SphereClient> {
-        private Configuration configuration;
 
-        //here we need field injection, the constructor needs to be called explicitly
+        private final Configuration configuration;
+        private final ApplicationLifecycle applicationLifecycle;
+
         @Inject
-        private ApplicationLifecycle applicationLifecycle;
-
-        public SphereClientProvider(final Configuration configuration) {
+        public SphereClientProvider(final Configuration configuration, final ApplicationLifecycle applicationLifecycle) {
             this.configuration = configuration;
+            this.applicationLifecycle = applicationLifecycle;
         }
 
         @Override
