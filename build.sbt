@@ -9,8 +9,8 @@ scalaVersion := "2.11.5"
 libraryDependencies ++=
   cache ::
   javaWs ::
-  ("io.sphere.sdk.jvm" % "models" % "1.0.0-M12" withSources()) ::
-  "io.sphere.sdk.jvm" %% "play-2_3-java-client" % "1.0.0-M12" ::
+  "de.flapdoodle.embed" % "de.flapdoodle.embed.mongo" % "1.47.3" ::
+  "org.mongodb" % "mongodb-driver" % "3.0.1" ::
   "org.easytesting" % "fest-assert" % "1.4" % "test" ::
   Nil
 
