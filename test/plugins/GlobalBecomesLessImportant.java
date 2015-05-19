@@ -11,7 +11,10 @@ import play.api.OptionalSourceMapper;
 import play.api.UsefulException;
 import play.api.inject.Binding;
 import play.api.inject.Module;
+import play.api.mvc.EssentialFilter;
+import play.filters.gzip.GzipFilter;
 import play.http.DefaultHttpRequestHandler;
+import play.http.HttpFilters;
 import play.inject.guice.GuiceApplicationBuilder;
 import play.api.routing.Router;
 import play.http.DefaultHttpErrorHandler;
@@ -223,7 +226,7 @@ public class GlobalBecomesLessImportant {
         }
 
         //custom HttpRequestHandler example
-        //need to wire it into the application.conf: path.to.CustomHttpRequestHandler
+        //need to wire it into the application.conf: "path.to.CustomHttpRequestHandler"
         public class CustomHttpRequestHandler extends DefaultHttpRequestHandler {
             @Override
             public Action createAction(final Http.Request request, final Method method) {
@@ -236,7 +239,31 @@ public class GlobalBecomesLessImportant {
         //if you need this, you still need the Global class :D
         public abstract play.api.mvc.Handler onRouteRequest(Http.RequestHeader request);
 
+        //don't use it
+        //implement the interface HttpFilters and register the class
+        //in application.conf: play.http.filters=com.example.Filters = "path.to.CustomFilters"
+        //
+        //also: this was inconvenient if you need parameterized filters, which is possible in scala
         public abstract <T extends play.api.mvc.EssentialFilter> Class<T>[] filters();
+
+        //example from https://github.com/playframework/playframework/pull/4500/files
+        public class Filters implements HttpFilters {
+
+            private final GzipFilter gzip;
+
+            @Inject
+            public Filters(GzipFilter gzip) {
+                this.gzip = gzip;
+            }
+
+            @Override
+            public EssentialFilter[] filters() {
+                //in this example it uses DI, but now you can in Java use parameterized filters
+                //instead of using just the no param constructors
+                //à la return new EssentialFilter[] { new WhatEverFilter(5, "another param") };
+                return new EssentialFilter[] { gzip };
+            }
+        }
     }
 
 
