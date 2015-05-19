@@ -1,17 +1,8 @@
 package greetings;
 
-import javax.inject.Singleton;
-
-@Singleton
-final class HelloServiceImpl implements HelloService {
-    private final String greeting;
-
-    public HelloServiceImpl(final String greeting) {
-        this.greeting = greeting;
-    }
-
+public class HelloServiceImpl implements HelloService {
     @Override
     public String getGreeting() {
-        return greeting;
+        return "world";
     }
 }
