@@ -15,3 +15,7 @@ libraryDependencies ++=
   Nil
 
 javacOptions += "-Xlint:deprecation"
+
+dependencyOverrides += "com.typesafe.play" %% "play-omnidoc" % "2.4.0-RC2"
+
+dependencyOverrides += "com.typesafe.netty" % "netty-http-pipelining" % "1.1.4"

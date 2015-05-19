@@ -3,7 +3,7 @@ package greetings;
 import javax.inject.Singleton;
 
 @Singleton
-public class HelloServiceImpl implements HelloService {
+final class HelloServiceImpl implements HelloService {
     private final String greeting;
 
     public HelloServiceImpl(final String greeting) {
