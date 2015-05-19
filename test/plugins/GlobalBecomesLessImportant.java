@@ -2,20 +2,23 @@ package plugins;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.typesafe.config.ConfigFactory;
 import greetings.HelloService;
 import greetings.HelloServiceImpl;
 import play.Application;
 import play.Configuration;
 import play.Mode;
 import play.api.Environment;
+import play.api.OptionalSourceMapper;
+import play.api.UsefulException;
 import play.api.inject.Binding;
 import play.api.inject.Module;
+import play.inject.guice.GuiceApplicationBuilder;
+import play.api.routing.Router;
+import play.http.DefaultHttpErrorHandler;
 import play.inject.ApplicationLifecycle;
 import play.libs.F;
-import play.mvc.Action;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Result;
+import play.mvc.*;
 import scala.collection.Seq;
 
 import javax.inject.Provider;
@@ -27,6 +30,8 @@ import static play.inject.Bindings.bind;
 
 public class GlobalBecomesLessImportant {
     public abstract class GlobalSettingsLikeInPlay23 {
+        //removed in favor of default dependency injection system
+        public abstract <A> A getControllerInstance(Class<A> controllerClass) throws Exception;
 
         /*
             don't use it, use dependency injection instead
@@ -132,21 +137,84 @@ public class GlobalBecomesLessImportant {
             }
         }
 
+        //don't use it, use a custom HttpErrorHandler (interface) instead, there is also a default implementation
         public abstract F.Promise<Result> onError(Http.RequestHeader request, Throwable t);
+        public abstract F.Promise<Result> onHandlerNotFound(Http.RequestHeader request);//client error
+        public abstract F.Promise<Result> onBadRequest(Http.RequestHeader request, String error);
+
+        //you need to wire it into your application.conf play.http.errorHandler = "thenewglobals.CustomHttpErrorHandler"
+        private class CustomHttpErrorHandler extends DefaultHttpErrorHandler {
+
+            @javax.inject.Inject
+            public CustomHttpErrorHandler(final Configuration configuration, final play.Environment environment, final OptionalSourceMapper optionalSourceMapper, final Provider<Router> provider) {
+                super(configuration, environment, optionalSourceMapper, provider);
+            }
+
+            @Override
+            protected F.Promise<Result> onBadRequest(final Http.RequestHeader requestHeader, final String message) {
+                return super.onBadRequest(requestHeader, message);
+            }
+
+            @Override
+            public F.Promise<Result> onClientError(final Http.RequestHeader requestHeader, final int statusCode, final String message) {
+                return super.onClientError(requestHeader, statusCode, message);
+            }
+
+            @Override
+            protected F.Promise<Result> onDevServerError(final Http.RequestHeader requestHeader, final UsefulException e) {
+                return super.onDevServerError(requestHeader, e);
+            }
+
+            @Override
+            protected F.Promise<Result> onForbidden(final Http.RequestHeader requestHeader, final String message) {
+                return super.onForbidden(requestHeader, message);
+            }
+
+            @Override
+            protected F.Promise<Result> onNotFound(final Http.RequestHeader requestHeader, final String message) {
+                return F.Promise.pure(Results.notFound("bad request, use your own template"));
+            }
+
+            @Override
+            protected F.Promise<Result> onProdServerError(final Http.RequestHeader requestHeader, final UsefulException e) {
+                return super.onProdServerError(requestHeader, e);
+            }
+
+            @Override
+            public F.Promise<Result> onServerError(final Http.RequestHeader requestHeader, final Throwable throwable) {
+                return super.onServerError(requestHeader, throwable);
+            }
+        }
+
+        /*
+        - really deprecated
+        - use env vars, other config files: -Dconfig.resource,  -Dconfig.file, -Dconfig.url
+        - or use custom ApplicationLoader
+         */
+        public abstract Configuration onLoadConfig(Configuration config, File path, ClassLoader classloader);
+        public abstract Configuration onLoadConfig(Configuration config, File path, ClassLoader classloader, Mode mode);
+
+        private void customApplicationLoaderWithConfigExample(){
+            //for tests
+            final Application application = new GuiceApplicationBuilder()
+                    .loadConfig(environment -> new Configuration(ConfigFactory.parseString("mysettings.key=value"))
+                            .withFallback(Configuration.load(environment)))
+                    .build();
+        }
+
+
 
         public abstract Action onRequest(Http.Request request, Method actionMethod);
 
         public abstract play.api.mvc.Handler onRouteRequest(Http.RequestHeader request);
 
-        public abstract F.Promise<Result> onHandlerNotFound(Http.RequestHeader request);
 
-        public abstract F.Promise<Result> onBadRequest(Http.RequestHeader request, String error);
 
-        public abstract <A> A getControllerInstance(Class<A> controllerClass) throws Exception;
 
-        public abstract Configuration onLoadConfig(Configuration config, File path, ClassLoader classloader);
 
-        public abstract Configuration onLoadConfig(Configuration config, File path, ClassLoader classloader, Mode mode);
+
+
+
 
         public abstract <T extends play.api.mvc.EssentialFilter> Class<T>[] filters();
     }
