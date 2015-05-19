@@ -5,14 +5,13 @@ import com.google.inject.Inject;
 import com.typesafe.config.ConfigFactory;
 import greetings.HelloService;
 import greetings.HelloServiceImpl;
-import play.Application;
-import play.Configuration;
-import play.Mode;
+import play.*;
 import play.api.Environment;
 import play.api.OptionalSourceMapper;
 import play.api.UsefulException;
 import play.api.inject.Binding;
 import play.api.inject.Module;
+import play.http.DefaultHttpRequestHandler;
 import play.inject.guice.GuiceApplicationBuilder;
 import play.api.routing.Router;
 import play.http.DefaultHttpErrorHandler;
@@ -202,19 +201,40 @@ public class GlobalBecomesLessImportant {
                     .build();
         }
 
+        //use action composition instead
+        //or a custom implementation for HttpRequestHandler (interface)
+        public abstract Action onRequest(Http.Request request, Method method);
 
+        @With(DemoActionComposition.class)
+        public class ActionCompositionExampleController extends Controller {
+            public Result hello() {
+                final int value = (int) ctx().args.getOrDefault("computedValue", 0);//getOrDefault is new in Java 8, no null
+                return ok("result =" + value);
+            }
+        }
 
-        public abstract Action onRequest(Http.Request request, Method actionMethod);
+        public class DemoActionComposition extends Action.Simple {
+            @Override
+            public F.Promise<Result> call(final Http.Context context) throws Throwable {
+                Logger.info("request " + context.request());//but here is not the "root" action method available
+                context.args.put("computedValue", 1 + 1);
+                return delegate.call(context);
+            }
+        }
 
+        //custom HttpRequestHandler example
+        //need to wire it into the application.conf: path.to.CustomHttpRequestHandler
+        public class CustomHttpRequestHandler extends DefaultHttpRequestHandler {
+            @Override
+            public Action createAction(final Http.Request request, final Method method) {
+                //log sth like [info] application - request GET /hello public play.mvc.Result controllers.HelloController.hello()
+                Logger.info("request " + request + " " + method);
+                return super.createAction(request, method);
+            }
+        }
+
+        //if you need this, you still need the Global class :D
         public abstract play.api.mvc.Handler onRouteRequest(Http.RequestHeader request);
-
-
-
-
-
-
-
-
 
         public abstract <T extends play.api.mvc.EssentialFilter> Class<T>[] filters();
     }
