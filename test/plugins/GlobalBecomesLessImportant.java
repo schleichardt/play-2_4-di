@@ -241,7 +241,7 @@ public class GlobalBecomesLessImportant {
 
         //don't use it
         //implement the interface HttpFilters and register the class
-        //in application.conf: play.http.filters=com.example.Filters = "path.to.CustomFilters"
+        //in application.conf: play.http.filters="path.to.CustomFilters"
         //
         //also: this was inconvenient if you need parameterized filters, which is possible in scala
         public abstract <T extends play.api.mvc.EssentialFilter> Class<T>[] filters();
@@ -264,6 +264,17 @@ public class GlobalBecomesLessImportant {
                 return new EssentialFilter[] { gzip };
             }
         }
+
+        //additional notes, in application.conf you can dermine the class for
+        // HttpRequestHandlers, HttpErrorHandlers and Filters
+        //in tests you can override it
+        private void confOverrideForFilters() {
+            final Application application = new GuiceApplicationBuilder()
+                    //overrides one value
+                    .configure("play.http.filters", Filters.class.getCanonicalName())
+                    .build();
+        }
+
     }
 
 
